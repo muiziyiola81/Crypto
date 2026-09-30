@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="128" fill="#09090b"/>
+  <!-- Outer vault ring -->
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#27272a" stroke-width="14"/>
+  <circle cx="256" cy="256" r="168" fill="#121215" stroke="#3f3f46" stroke-width="4"/>
+  
+  <!-- Vault locking bolts -->
+  <circle cx="256" cy="88" r="12" fill="#71717a"/>
+  <circle cx="375" cy="137" r="12" fill="#71717a"/>
+  <circle cx="424" cy="256" r="12" fill="#71717a"/>
+  <circle cx="375" cy="375" r="12" fill="#71717a"/>
+  <circle cx="256" cy="424" r="12" fill="#71717a"/>
+  <circle cx="137" cy="375" r="12" fill="#71717a"/>
+  <circle cx="88" cy="256" r="12" fill="#71717a"/>
+  <circle cx="137" cy="137" r="12" fill="#71717a"/>
+
+  <!-- Inner vault mechanism -->
+  <circle cx="256" cy="256" r="120" fill="#18181b" stroke="#52525b" stroke-width="6"/>
+  <circle cx="256" cy="256" r="85" fill="#27272a"/>
+
+  <!-- Radial spokes / vault wheel handle -->
+  <line x1="256" y1="171" x2="256" y2="341" stroke="#a1a1aa" stroke-width="12" stroke-linecap="round"/>
+  <line x1="171" y1="256" x2="341" y2="256" stroke="#a1a1aa" stroke-width="12" stroke-linecap="round"/>
+  <line x1="196" y1="196" x2="316" y2="316" stroke="#a1a1aa" stroke-width="12" stroke-linecap="round"/>
+  <line x1="316" y1="196" x2="196" y2="316" stroke="#a1a1aa" stroke-width="12" stroke-linecap="round"/>
+
+  <!-- Center hub with keyhole/crypto emblem -->
+  <circle cx="256" cy="256" r="42" fill="#f4f4f5"/>
+  <path d="M256 230 A 13 13 0 0 0 243 243 A 13 13 0 0 0 251 254 L 249 276 L 263 276 L 261 254 A 13 13 0 0 0 269 243 A 13 13 0 0 0 256 230 Z" fill="#09090b"/>
+</svg>
