@@ -432,18 +432,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!isSupabaseConfigured()) {
         return { success: false, error: 'Supabase is not configured. Please enter project credentials in Settings.' };
       }
-      const { data, error } = await supabase.auth.signUp({
-        email,
+
+      const cleanEmail = email.trim().toLowerCase();
+
+      // Attempt server auto-confirmed account creation for immediate vault enrollment
+      let serverRegistered = false;
+      try {
+        const resp = await fetch('/api/auth/register-vault', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail, password }),
+        });
+        const resJson = await resp.json();
+        if (!resp.ok) {
+          return { success: false, error: resJson.error || 'Failed to register vault account.' };
+        }
+        serverRegistered = true;
+      } catch {
+        // Fallback to client SDK signUp if server is unavailable
+      }
+
+      if (!serverRegistered) {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password,
+        });
+        if (signUpError) {
+          return { success: false, error: signUpError.message };
+        }
+      }
+
+      // Automatically sign in to get active session
+      const { data: signData, error: signErr } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
         password,
       });
 
-      if (error) {
-        return { success: false, error: error.message };
+      if (signErr) {
+        return { success: false, error: signErr.message };
       }
 
-      if (data.user) {
-        setUser(data.user);
-        setSession(data.session);
+      if (signData.user) {
+        setUser(signData.user);
+        setSession(signData.session);
         // Requirement 3:
         // Create account
         // → Finish vault account setup
@@ -454,6 +485,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsVaultUnlocked(false);
         setActiveScreen('biometric_setup');
         syncRouteToUrl('biometric_setup');
+        showToast('Vault created. Please register your device biometric credential.');
         return { success: true };
       }
 

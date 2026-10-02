@@ -43,11 +43,18 @@ export const VaultLockScreen: React.FC = () => {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-32 bg-zinc-800/20 blur-3xl pointer-events-none rounded-full" />
 
         {/* Central Lock Emblem */}
-        <div className="relative mx-auto w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-700/80 flex items-center justify-center mb-6 shadow-inner">
+        <div className="relative mx-auto w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-700/80 flex items-center justify-center mb-5 shadow-inner">
           <Lock className="w-7 h-7 text-zinc-100" />
           <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center">
             <ShieldAlert className="w-3 h-3 text-zinc-400" />
           </div>
+        </div>
+
+        <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full bg-zinc-900/90 border border-zinc-800 text-[11px] font-medium text-zinc-300">
+          <div className="w-4 h-4 rounded bg-white text-zinc-950 font-bold text-[9px] flex items-center justify-center">
+            CL
+          </div>
+          <span className="tracking-tight font-semibold">CryptoLocker</span>
         </div>
 
         <h1 className="text-xl font-bold text-white tracking-tight">Vault Locked</h1>

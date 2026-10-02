@@ -29,7 +29,7 @@ import { AdminRecordsView } from './views/admin/AdminRecordsView';
 import { Lock } from 'lucide-react';
 
 const ScreenRouter: React.FC = () => {
-  const { user, activeScreen, loading } = useAuth();
+  const { user, activeScreen, loading, isVaultUnlocked } = useAuth();
 
   if (loading) {
     return (
@@ -59,7 +59,15 @@ const ScreenRouter: React.FC = () => {
     }
   }
 
-  // Authenticated routing
+  // Authenticated routing: If vault is locked, require biometric enrollment or biometric unlock
+  if (!isVaultUnlocked) {
+    if (activeScreen === 'biometric_setup') {
+      return <BiometricSetupView />;
+    }
+    return <BiometricUnlockView />;
+  }
+
+  // Authenticated & Unlocked routing
   switch (activeScreen) {
     case 'biometric_unlock':
       return <BiometricUnlockView />;

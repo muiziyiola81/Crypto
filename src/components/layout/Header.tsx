@@ -4,7 +4,7 @@ import { Lock, Unlock, UserCircle2 } from 'lucide-react';
 import { PWAInstallPrompt } from '../ui/PWAInstallPrompt';
 
 export const Header: React.FC = () => {
-  const { user, isVaultUnlocked, lockVault, navigateTo, activeScreen, isAdmin } = useAuth();
+  const { user, isVaultUnlocked, lockVault, signOut, navigateTo, activeScreen, isAdmin } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 w-full bg-zinc-950/85 backdrop-blur-md border-b border-zinc-800/80">
@@ -12,7 +12,7 @@ export const Header: React.FC = () => {
         {/* Zone 1: Single text element wordmark */}
         <div className="flex items-center gap-2">
           <button
-            onClick={() => navigateTo(user ? 'dashboard' : 'welcome')}
+            onClick={() => navigateTo(user && isVaultUnlocked ? 'dashboard' : 'welcome')}
             className="flex items-center gap-2.5 text-left focus:outline-none cursor-pointer group"
           >
             <div className="w-7 h-7 rounded-lg bg-zinc-100 text-zinc-950 flex items-center justify-center font-bold text-xs shadow-sm">
@@ -24,8 +24,8 @@ export const Header: React.FC = () => {
           </button>
         </div>
 
-        {/* Zone 2: 4-6 clean text navigation links (Desktop) */}
-        {user && (
+        {/* Zone 2: Navigation links only when vault is authenticated AND unlocked */}
+        {user && isVaultUnlocked && (
           <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-zinc-400">
             <button
               onClick={() => navigateTo('dashboard')}
@@ -96,27 +96,16 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-2.5">
           <PWAInstallPrompt />
 
-          {user && (
+          {user && isVaultUnlocked && (
             <>
-              {isVaultUnlocked ? (
-                <button
-                  onClick={lockVault}
-                  title="Lock Vault immediately"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/80 text-xs font-medium transition cursor-pointer whitespace-nowrap"
-                >
-                  <Lock className="w-3.5 h-3.5 text-zinc-300" />
-                  <span className="hidden sm:inline">Lock Vault</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => navigateTo('biometric_unlock')}
-                  title="Vault is locked"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 text-zinc-400 border border-zinc-800 text-xs font-medium cursor-pointer"
-                >
-                  <Unlock className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Unlock</span>
-                </button>
-              )}
+              <button
+                onClick={lockVault}
+                title="Lock Vault immediately"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/80 text-xs font-medium transition cursor-pointer whitespace-nowrap"
+              >
+                <Lock className="w-3.5 h-3.5 text-zinc-300" />
+                <span className="hidden sm:inline">Lock Vault</span>
+              </button>
 
               <button
                 onClick={() => navigateTo('profile')}
@@ -126,6 +115,21 @@ export const Header: React.FC = () => {
                 <UserCircle2 className="w-5 h-5" />
               </button>
             </>
+          )}
+
+          {user && !isVaultUnlocked && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-400 font-medium">
+                <Lock className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Vault Locked</span>
+              </div>
+              <button
+                onClick={signOut}
+                className="px-2.5 py-1 text-xs font-medium text-zinc-400 hover:text-white transition cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </div>
           )}
 
           {!user && (

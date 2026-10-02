@@ -78,7 +78,7 @@ export const BiometricSetupModal: React.FC<BiometricSetupModalProps> = ({
         {!isWebAuthnAvailable && (
           <div className="mt-4 p-3 rounded-xl bg-amber-950/30 border border-amber-800/80 text-xs text-amber-200 flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <span>WebAuthn is not supported by this browser. Password/session fallback will be used.</span>
+            <span>WebAuthn hardware authenticator is required to use this vault.</span>
           </div>
         )}
 
@@ -160,7 +160,7 @@ export const BiometricSetupModal: React.FC<BiometricSetupModalProps> = ({
             onClick={onClose}
             className="w-full py-2 text-xs text-zinc-500 hover:text-zinc-300 transition cursor-pointer"
           >
-            Skip for now
+            Cancel
           </button>
         </div>
       </div>
