@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { Fingerprint, Shield, CheckCircle2, AlertCircle, ArrowRight, Laptop, Smartphone, Info, ExternalLink } from 'lucide-react';
+import { Fingerprint, Shield, CheckCircle2, AlertCircle, Laptop, Smartphone, Info, ExternalLink, LogOut, Lock } from 'lucide-react';
 import { WebAuthnDiagnostics } from '../types/auth';
 
 export const BiometricSetupView: React.FC = () => {
@@ -9,6 +9,7 @@ export const BiometricSetupView: React.FC = () => {
     isWebAuthnAvailable,
     isPlatformBiometricAvailable,
     navigateTo,
+    signOut,
     lastBiometricDiagnostics,
   } = useAuth();
 
@@ -32,7 +33,10 @@ export const BiometricSetupView: React.FC = () => {
         navigateTo('dashboard');
       }, 1400);
     } else {
-      setError(res.error || 'Failed to complete hardware biometric registration.');
+      setError(
+        res.error ||
+          'Biometric setup was cancelled or failed. Biometric registration is required to access and lock your vault.'
+      );
       setDiagnostics(res.diagnostics || lastBiometricDiagnostics || null);
     }
   };
@@ -43,14 +47,14 @@ export const BiometricSetupView: React.FC = () => {
     <div className="max-w-lg mx-auto py-6 sm:py-10">
       <div className="vault-panel p-6 sm:p-8 rounded-3xl border border-zinc-800 shadow-2xl">
         <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-700/80 flex items-center justify-center mx-auto mb-3">
+          <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-700/80 flex items-center justify-center mx-auto mb-3 shadow-inner">
             <Fingerprint className="w-7 h-7 text-white" />
           </div>
           <h2 className="text-xl font-bold text-white tracking-tight">
-            Enable Biometric Vault Entry
+            Set Up Biometric Vault Protection
           </h2>
-          <p className="mt-1 text-xs text-zinc-400 max-w-sm mx-auto">
-            Bind your physical device enclave (Touch ID, Face ID, Android Biometrics, or Windows Hello) to your CryptoLocker vault.
+          <p className="mt-1.5 text-xs text-zinc-400 max-w-sm mx-auto leading-relaxed">
+            CryptoLocker enforces biometric-only vault security. Bind your device enclave (Touch ID, Face ID, Android Biometrics, or Windows Hello) to unlock your credentials.
           </p>
         </div>
 
@@ -58,18 +62,29 @@ export const BiometricSetupView: React.FC = () => {
         <div className="p-3.5 rounded-2xl bg-zinc-950/80 border border-zinc-800 text-xs text-zinc-300 space-y-2 mb-6">
           <div className="flex items-center gap-2 text-white font-medium text-xs">
             <Shield className="w-4 h-4 text-zinc-300 shrink-0" />
-            <span>FIDO2 / WebAuthn Hardware Security</span>
+            <span>Hardware Enclave · Biometric-Only Lock</span>
           </div>
           <p className="text-[11px] text-zinc-400 leading-relaxed">
-            CryptoLocker never touches or stores your biometric information. The browser handles cryptographic verification locally on your device chip.
+            Vault secrets are shielded by your physical biometric credential. WebAuthn operates directly on your device chip; raw biometric data is never transmitted or stored.
           </p>
+        </div>
+
+        {/* Mandatory Requirement Notice */}
+        <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-800/40 text-[11px] text-amber-300/90 flex items-start gap-2 mb-6">
+          <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+          <span>
+            Biometric registration is mandatory. CryptoLocker does not permit alternative password, PIN, or session unlock bypasses.
+          </span>
         </div>
 
         {error && (
           <div className="mb-5 space-y-2">
-            <div className="p-3 rounded-xl bg-red-950/40 border border-red-800/80 text-xs text-red-200 flex items-start gap-2">
+            <div className="p-3.5 rounded-xl bg-red-950/40 border border-red-800/80 text-xs text-red-200 flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-              <div className="break-words">{error}</div>
+              <div className="space-y-1">
+                <span className="font-semibold block text-red-300">Biometric Setup Required</span>
+                <p className="text-[11px] text-red-200/90 leading-relaxed">{error}</p>
+              </div>
             </div>
 
             {/* Development Diagnostics */}
@@ -112,9 +127,9 @@ export const BiometricSetupView: React.FC = () => {
         {enrolled ? (
           <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-700 text-center space-y-2">
             <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
-            <h3 className="text-sm font-semibold text-white">Biometric Entry Active</h3>
+            <h3 className="text-sm font-semibold text-white">Biometric Protection Active</h3>
             <p className="text-xs text-zinc-400">
-              Your device credential is registered. Entering Dashboard...
+              Biometric credential enrolled successfully. Entering your vault...
             </p>
           </div>
         ) : (
@@ -148,17 +163,19 @@ export const BiometricSetupView: React.FC = () => {
               disabled={loading || !isWebAuthnAvailable}
               className="w-full h-12 mt-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs tracking-wide flex items-center justify-center gap-2 transition active:scale-[0.98] shadow-lg cursor-pointer disabled:opacity-50"
             >
-              <Fingerprint className="w-4 h-4" />
+              <Fingerprint className={`w-4 h-4 ${loading ? 'animate-pulse' : ''}`} />
               <span>{loading ? 'Prompting Device Enclave...' : 'Register Device Biometrics'}</span>
             </button>
 
-            <button
-              onClick={() => navigateTo('dashboard')}
-              className="w-full py-2.5 text-xs text-zinc-400 hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <span>Skip and continue to Dashboard</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            <div className="pt-3 border-t border-zinc-800/60 flex items-center justify-center">
+              <button
+                onClick={signOut}
+                className="py-1.5 px-3 text-xs text-zinc-400 hover:text-zinc-200 transition cursor-pointer flex items-center gap-1.5"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign out of account</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

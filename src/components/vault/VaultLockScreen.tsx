@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { ShieldAlert, Fingerprint, KeyRound, LogOut, Lock, AlertCircle, Info, ExternalLink } from 'lucide-react';
+import { ShieldAlert, Fingerprint, LogOut, Lock, AlertCircle, Info, ExternalLink } from 'lucide-react';
 import { WebAuthnDiagnostics } from '../../types/auth';
 
 export const VaultLockScreen: React.FC = () => {
   const {
     user,
     unlockVaultBiometric,
-    unlockVaultFallback,
     signOut,
     registeredPasskeys,
     isWebAuthnAvailable,
     lastBiometricDiagnostics,
+    navigateTo,
   } = useAuth();
 
   const [isVerifying, setIsVerifying] = useState(false);
@@ -32,10 +32,6 @@ export const VaultLockScreen: React.FC = () => {
       setErrorMessage(res.error || 'Biometric authentication was not completed.');
       setDiagnostics(res.diagnostics || lastBiometricDiagnostics || null);
     }
-  };
-
-  const handleFallbackUnlock = () => {
-    unlockVaultFallback();
   };
 
   const activeDiagnostics = diagnostics || lastBiometricDiagnostics;
@@ -116,26 +112,27 @@ export const VaultLockScreen: React.FC = () => {
               disabled={isVerifying}
               className="w-full h-12 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs tracking-wide flex items-center justify-center gap-2.5 transition active:scale-[0.98] cursor-pointer shadow-lg disabled:opacity-60"
             >
-              <Fingerprint className="w-4 h-4" />
-              <span>{isVerifying ? 'Authenticating with Device...' : 'Unlock with Biometrics'}</span>
+              <Fingerprint className={`w-4 h-4 ${isVerifying ? 'animate-pulse' : ''}`} />
+              <span>{isVerifying ? 'Authenticating with Device...' : 'Biometric Unlock'}</span>
             </button>
           ) : (
-            <div className="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-xs text-zinc-400">
-              <span className="font-medium text-zinc-300">Biometric not enrolled for this device</span>
-              <p className="mt-0.5 text-[11px] text-zinc-500">
-                Unlock with your active authenticated session below.
+            <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 text-xs text-zinc-300 space-y-2 text-left">
+              <div className="flex items-center gap-2 text-amber-400 font-medium">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>Biometric Credential Required</span>
+              </div>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">
+                Biometric setup is required to access this vault. Register your device passkey to continue.
               </p>
+              <button
+                onClick={() => navigateTo('biometric_setup')}
+                className="w-full mt-2 h-10 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs tracking-wide flex items-center justify-center gap-2 transition active:scale-[0.98] cursor-pointer"
+              >
+                <Fingerprint className="w-3.5 h-3.5" />
+                <span>Set Up Biometric Authentication</span>
+              </button>
             </div>
           )}
-
-          {/* Session fallback unlock */}
-          <button
-            onClick={handleFallbackUnlock}
-            className="w-full h-11 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 font-medium text-xs flex items-center justify-center gap-2 transition cursor-pointer"
-          >
-            <KeyRound className="w-3.5 h-3.5 text-zinc-400" />
-            <span>Unlock with Active Session</span>
-          </button>
 
           <div className="pt-4 border-t border-zinc-800/80 flex items-center justify-between text-xs text-zinc-400">
             <button

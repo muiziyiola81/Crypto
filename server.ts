@@ -70,6 +70,56 @@ app.get('/api/admin/health', (_req, res) => {
   });
 });
 
+// Vault Registration API Route
+app.post('/api/auth/register-vault', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      res.status(400).json({ error: 'Email and password are required.' });
+      return;
+    }
+
+    if (!serverSupabase) {
+      res.status(503).json({ error: 'Supabase server client not configured.' });
+      return;
+    }
+
+    const cleanEmail = String(email).trim().toLowerCase();
+
+    // Use service role to create auto-confirmed user account for seamless biometric enrollment
+    if (SUPABASE_SERVICE_ROLE) {
+      const { data, error } = await serverSupabase.auth.admin.createUser({
+        email: cleanEmail,
+        password: String(password),
+        email_confirm: true,
+      });
+
+      if (error) {
+        res.status(400).json({ error: error.message });
+        return;
+      }
+
+      res.json({ success: true, user: data.user });
+      return;
+    }
+
+    // Fallback to standard signup if service role is not present
+    const { data, error } = await serverSupabase.auth.signUp({
+      email: cleanEmail,
+      password: String(password),
+    });
+
+    if (error) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+
+    res.json({ success: true, user: data.user, session: data.session });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to create vault account.' });
+  }
+});
+
 // Helper for parsing user_items row
 function parseUserItemRow(row: any) {
   const content = row.content || '';

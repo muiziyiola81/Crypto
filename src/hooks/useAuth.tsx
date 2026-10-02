@@ -30,7 +30,6 @@ interface AuthContextType {
   // Vault lock actions
   lockVault: () => void;
   unlockVaultBiometric: () => Promise<{ success: boolean; error?: string; diagnostics?: WebAuthnDiagnostics }>;
-  unlockVaultFallback: () => void;
   enableBiometric: (deviceName?: string) => Promise<{ success: boolean; error?: string; diagnostics?: WebAuthnDiagnostics }>;
   disableBiometric: () => void;
   
@@ -213,39 +212,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (mounted) {
-          const initialRoute = parseRouteFromLocation();
-
           if (initialSession?.user) {
             setSession(initialSession);
             setUser(initialSession.user);
-            const userIsAdmin = isUserAdmin(initialSession.user.id);
 
-            // Require biometric or fallback unlock upon fresh app start if biometric was set
-            const hasBio = localStorage.getItem(`cryptolocker_biometric_enabled_${initialSession.user.id}`) === 'true' ||
-                           localStorage.getItem(`bankvault_biometric_enabled_${initialSession.user.id}`) === 'true';
+            // Requirement 5:
+            // Once the vault is locked, the app must require the registered biometric credential to unlock it.
+            // An active Supabase login session must NOT unlock the vault.
+            // Refreshing the page, reopening the PWA, or returning to an existing authenticated session must NOT bypass the vault lock.
+            setIsVaultUnlocked(false);
+
+            const passkeys = getStoredPasskeys(initialSession.user.id);
+            const hasBio = (localStorage.getItem(`cryptolocker_biometric_enabled_${initialSession.user.id}`) === 'true' ||
+                           localStorage.getItem(`bankvault_biometric_enabled_${initialSession.user.id}`) === 'true') &&
+                          passkeys.length > 0;
 
             if (hasBio) {
-              setIsVaultUnlocked(false);
               setActiveScreen('biometric_unlock');
+              syncRouteToUrl('biometric_unlock');
             } else {
-              setIsVaultUnlocked(true);
-              if (initialRoute?.screen && initialRoute.screen.startsWith('admin_')) {
-                if (userIsAdmin) {
-                  setActiveScreen(initialRoute.screen);
-                  syncRouteToUrl(initialRoute.screen);
-                } else {
-                  showToast('Access Denied: Administrator credentials required.');
-                  setActiveScreen('dashboard');
-                  syncRouteToUrl('dashboard');
-                }
-              } else if (initialRoute) {
-                setActiveScreen(initialRoute.screen);
-                syncRouteToUrl(initialRoute.screen);
-              } else {
-                setActiveScreen('dashboard');
-              }
+              // If user has not enrolled biometrics yet, prompt mandatory biometric setup
+              setActiveScreen('biometric_setup');
+              syncRouteToUrl('biometric_setup');
             }
           } else {
+            const initialRoute = parseRouteFromLocation();
             if (initialRoute?.screen === 'signup') {
               setActiveScreen('signup');
             } else if (initialRoute?.screen === 'signin') {
@@ -288,32 +279,83 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Listen for hash changes so direct browser URL navigation works seamlessly
+  // Listen for hash changes so direct browser URL navigation works seamlessly without bypassing lock
   useEffect(() => {
     const handleHashChange = () => {
       const route = parseRouteFromLocation();
-      if (route) {
-        if (route.screen.startsWith('admin_')) {
-          if (user && isUserAdmin(user.id)) {
-            setActiveScreen(route.screen);
-          } else {
-            showToast('Access Denied: Administrator credentials required.');
-            setActiveScreen(user ? 'dashboard' : 'welcome');
-          }
-        } else {
+      if (!route) return;
+
+      if (!user) {
+        if (route.screen === 'signup' || route.screen === 'signin' || route.screen === 'welcome' || route.screen === 'about') {
           setActiveScreen(route.screen);
+        } else {
+          setActiveScreen('welcome');
         }
+        return;
+      }
+
+      // User is authenticated: Enforce locked state
+      if (!isVaultUnlocked) {
+        const passkeys = getStoredPasskeys(user.id);
+        if (passkeys.length === 0 || route.screen === 'biometric_setup') {
+          setActiveScreen('biometric_setup');
+          syncRouteToUrl('biometric_setup');
+        } else {
+          setActiveScreen('biometric_unlock');
+          syncRouteToUrl('biometric_unlock');
+        }
+        return;
+      }
+
+      // Vault is unlocked
+      if (route.screen.startsWith('admin_')) {
+        if (isUserAdmin(user.id)) {
+          setActiveScreen(route.screen);
+        } else {
+          showToast('Access Denied: Administrator credentials required.');
+          setActiveScreen('dashboard');
+        }
+      } else {
+        setActiveScreen(route.screen);
       }
     };
 
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [user]);
+  }, [user, isVaultUnlocked]);
 
   const navigateTo = (screen: ActiveScreen, recordId: string | null = null, targetUserId: string | null = null) => {
+    // Unauthenticated user
+    if (!user) {
+      if (screen === 'signup' || screen === 'signin' || screen === 'welcome' || screen === 'about' || screen === 'forgot_password') {
+        setSelectedRecordId(null);
+        setActiveScreen(screen);
+        syncRouteToUrl(screen);
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      } else {
+        setActiveScreen('welcome');
+        syncRouteToUrl('welcome');
+      }
+      return;
+    }
+
+    // Authenticated user: Check if vault is locked
+    if (!isVaultUnlocked) {
+      const passkeys = getStoredPasskeys(user.id);
+      if (screen === 'biometric_setup' || passkeys.length === 0) {
+        setActiveScreen('biometric_setup');
+        syncRouteToUrl('biometric_setup');
+      } else {
+        setActiveScreen('biometric_unlock');
+        syncRouteToUrl('biometric_unlock');
+      }
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      return;
+    }
+
     // Security Guard: Prevent normal users from accessing any admin screens
     if (screen.startsWith('admin_')) {
-      if (!user || !isUserAdmin(user.id)) {
+      if (!isUserAdmin(user.id)) {
         showToast('Access Denied: Administrator credentials required.');
         setActiveScreen('dashboard');
         syncRouteToUrl('dashboard');
@@ -334,6 +376,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsVaultUnlocked(false);
     showToast('Vault locked. Credentials masked.');
     setActiveScreen('biometric_unlock');
+    syncRouteToUrl('biometric_unlock');
   };
 
   const unlockVaultBiometric = async (): Promise<{ success: boolean; error?: string; diagnostics?: WebAuthnDiagnostics }> => {
@@ -346,15 +389,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsVaultUnlocked(true);
       showToast('Vault unlocked via biometric verification');
       setActiveScreen('dashboard');
+      syncRouteToUrl('dashboard');
       return { success: true };
     }
-    return { success: false, error: result.error, diagnostics: result.diagnostics };
-  };
 
-  const unlockVaultFallback = () => {
-    setIsVaultUnlocked(true);
-    showToast('Vault unlocked via authenticated session fallback');
-    setActiveScreen('dashboard');
+    setIsVaultUnlocked(false);
+    return { success: false, error: result.error, diagnostics: result.diagnostics };
   };
 
   const enableBiometric = async (deviceName?: string): Promise<{ success: boolean; error?: string; diagnostics?: WebAuthnDiagnostics }> => {
@@ -366,6 +406,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(`cryptolocker_biometric_enabled_${user.id}`, 'true');
       setBiometricEnabled(true);
       setRegisteredPasskeys(getStoredPasskeys(user.id));
+      setIsVaultUnlocked(true);
       showToast('Biometric passkey registered successfully');
       return { success: true };
     }
@@ -379,7 +420,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       removeAllPasskeys(user.id);
       setBiometricEnabled(false);
       setRegisteredPasskeys([]);
-      showToast('Biometric entry disabled');
+      setIsVaultUnlocked(false);
+      showToast('Biometric credential removed. Biometric setup required.');
+      setActiveScreen('biometric_setup');
+      syncRouteToUrl('biometric_setup');
     }
   };
 
@@ -400,8 +444,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user) {
         setUser(data.user);
         setSession(data.session);
-        setIsVaultUnlocked(true);
-        navigateTo('biometric_setup');
+        // Requirement 3:
+        // Create account
+        // → Finish vault account setup
+        // → Prompt user to set up biometric authentication
+        // → Successfully create/register the biometric credential
+        // → Complete vault setup
+        // → Enter the vault
+        setIsVaultUnlocked(false);
+        setActiveScreen('biometric_setup');
+        syncRouteToUrl('biometric_setup');
         return { success: true };
       }
 
@@ -429,14 +481,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user) {
         setUser(data.user);
         setSession(data.session);
-        const hasBio = localStorage.getItem(`cryptolocker_biometric_enabled_${data.user.id}`) === 'true' ||
-                       localStorage.getItem(`bankvault_biometric_enabled_${data.user.id}`) === 'true';
+        // Requirement 5: An active Supabase login session must NOT unlock the vault.
+        setIsVaultUnlocked(false);
+        const passkeys = getStoredPasskeys(data.user.id);
+        const hasBio = (localStorage.getItem(`cryptolocker_biometric_enabled_${data.user.id}`) === 'true' ||
+                        localStorage.getItem(`bankvault_biometric_enabled_${data.user.id}`) === 'true') &&
+                       passkeys.length > 0;
         if (hasBio) {
-          setIsVaultUnlocked(false);
-          navigateTo('biometric_unlock');
+          setActiveScreen('biometric_unlock');
+          syncRouteToUrl('biometric_unlock');
         } else {
-          setIsVaultUnlocked(true);
-          navigateTo('dashboard');
+          setActiveScreen('biometric_setup');
+          syncRouteToUrl('biometric_setup');
         }
         return { success: true };
       }
@@ -495,7 +551,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     lastBiometricDiagnostics,
     lockVault,
     unlockVaultBiometric,
-    unlockVaultFallback,
     enableBiometric,
     disableBiometric,
     signUp,
