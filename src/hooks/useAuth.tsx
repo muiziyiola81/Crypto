@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [lastBiometricDiagnostics, setLastBiometricDiagnostics] = useState<WebAuthnDiagnostics | null>(null);
   
   // Navigation
-  const [activeScreen, setActiveScreen] = useState<ActiveScreen>('welcome');
+  const [activeScreen, setActiveScreen] = useState<ActiveScreen>('landing');
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [adminSelectedUserId, setAdminSelectedUserId] = useState<string | null>(null);
 
@@ -88,6 +88,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const rawPath = window.location.pathname.replace(/^\//, '').toLowerCase().trim();
     const target = rawHash || rawPath;
 
+    if (target === '' || target === 'landing' || target === 'home') {
+      return { screen: 'landing' };
+    }
+    if (target === 'welcome') return { screen: 'welcome' };
+    if (target === 'signin' || target === 'login') return { screen: 'signin' };
+    if (target === 'signup' || target === 'register') return { screen: 'signup' };
+
     if (target === 'admin' || target === 'admin/dashboard' || target === 'admin_dashboard' || target === 'admin-dashboard') {
       return { screen: 'admin_dashboard' };
     }
@@ -104,8 +111,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (target === 'search') return { screen: 'search' };
     if (target === 'about') return { screen: 'about' };
     if (target === 'add_record' || target === 'add') return { screen: 'add_record' };
-    if (target === 'signin') return { screen: 'signin' };
-    if (target === 'signup') return { screen: 'signup' };
 
     return null;
   };
@@ -114,6 +119,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (typeof window === 'undefined') return;
     let targetHash = '';
     switch (screen) {
+      case 'landing':
+        targetHash = '#/landing';
+        break;
+      case 'welcome':
+        targetHash = '#/welcome';
+        break;
+      case 'signin':
+        targetHash = '#/signin';
+        break;
+      case 'signup':
+        targetHash = '#/signup';
+        break;
       case 'admin_dashboard':
       case 'admin_activity':
       case 'admin_system':
@@ -241,8 +258,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setActiveScreen('signup');
             } else if (initialRoute?.screen === 'signin') {
               setActiveScreen('signin');
-            } else {
+            } else if (initialRoute?.screen === 'welcome') {
               setActiveScreen('welcome');
+            } else if (initialRoute?.screen === 'about') {
+              setActiveScreen('about');
+            } else {
+              setActiveScreen('landing');
             }
           }
           setLoading(false);
@@ -264,7 +285,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (!newSession?.user) {
           setIsVaultUnlocked(false);
-          setActiveScreen('welcome');
+          setActiveScreen('landing');
         }
       });
 
@@ -286,16 +307,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!route) return;
 
       if (!user) {
-        if (route.screen === 'signup' || route.screen === 'signin' || route.screen === 'welcome' || route.screen === 'about') {
+        if (route.screen === 'signup' || route.screen === 'signin' || route.screen === 'welcome' || route.screen === 'about' || route.screen === 'landing') {
           setActiveScreen(route.screen);
         } else {
-          setActiveScreen('welcome');
+          setActiveScreen('landing');
         }
         return;
       }
 
       // User is authenticated: Enforce locked state
       if (!isVaultUnlocked) {
+        if (route.screen === 'landing') {
+          setActiveScreen('landing');
+          syncRouteToUrl('landing');
+          return;
+        }
         const passkeys = getStoredPasskeys(user.id);
         if (passkeys.length === 0 || route.screen === 'biometric_setup') {
           setActiveScreen('biometric_setup');
@@ -327,15 +353,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const navigateTo = (screen: ActiveScreen, recordId: string | null = null, targetUserId: string | null = null) => {
     // Unauthenticated user
     if (!user) {
-      if (screen === 'signup' || screen === 'signin' || screen === 'welcome' || screen === 'about' || screen === 'forgot_password') {
+      if (screen === 'signup' || screen === 'signin' || screen === 'welcome' || screen === 'about' || screen === 'forgot_password' || screen === 'landing') {
         setSelectedRecordId(null);
         setActiveScreen(screen);
         syncRouteToUrl(screen);
         window.scrollTo({ top: 0, behavior: 'instant' });
       } else {
-        setActiveScreen('welcome');
-        syncRouteToUrl('welcome');
+        setActiveScreen('landing');
+        syncRouteToUrl('landing');
       }
+      return;
+    }
+
+    // Authenticated user: Check if explicitly navigating to landing page
+    if (screen === 'landing') {
+      setActiveScreen('landing');
+      syncRouteToUrl('landing');
+      window.scrollTo({ top: 0, behavior: 'instant' });
       return;
     }
 

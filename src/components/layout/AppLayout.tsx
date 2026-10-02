@@ -7,7 +7,17 @@ import { OfflineIndicator } from '../ui/OfflineIndicator';
 import { useAuth } from '../../hooks/useAuth';
 
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isVaultUnlocked } = useAuth();
+  const { user, isVaultUnlocked, activeScreen } = useAuth();
+
+  if (activeScreen === 'landing') {
+    return (
+      <div className="min-h-screen bg-black text-zinc-100 flex flex-col antialiased selection:bg-blue-600 selection:text-white">
+        <Toast />
+        <OfflineIndicator />
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col antialiased">

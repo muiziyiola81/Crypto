@@ -19,7 +19,6 @@ export const RecordForm: React.FC<RecordFormProps> = ({
   const [walletName, setWalletName] = useState(initialData?.wallet_name || '');
   const [exchangeName, setExchangeName] = useState(initialData?.exchange_or_wallet_provider || '');
   const [recordType, setRecordType] = useState<RecordType>(initialData?.record_type || 'Hardware Wallet');
-  const [usernameOrEmail, setUsernameOrEmail] = useState(initialData?.username_or_email || '');
   const [walletPassword, setWalletPassword] = useState(initialData?.wallet_password || '');
   const [pin, setPin] = useState(initialData?.pin || '');
   const [seedPhrase, setSeedPhrase] = useState(initialData?.seed_phrase || '');
@@ -28,7 +27,6 @@ export const RecordForm: React.FC<RecordFormProps> = ({
   const [privateKey, setPrivateKey] = useState(initialData?.private_key || '');
   const [walletAddress, setWalletAddress] = useState(initialData?.wallet_address || '');
   const [cryptoNetwork, setCryptoNetwork] = useState<CryptoNetwork>(initialData?.crypto_network || 'Bitcoin');
-  const [websiteUrl, setWebsiteUrl] = useState(initialData?.website_url || '');
   const [notes, setNotes] = useState(initialData?.notes || '');
 
   // Toggle visibility for secret inputs during entry
@@ -87,7 +85,7 @@ export const RecordForm: React.FC<RecordFormProps> = ({
       exchange_or_wallet_provider: cleanExchangeName,
       record_type: recordType,
       crypto_network: cryptoNetwork,
-      username_or_email: usernameOrEmail.trim() || undefined,
+      username_or_email: initialData?.username_or_email,
       wallet_password: walletPassword || undefined,
       pin: pin || undefined,
       seed_phrase: seedPhrase.trim() || undefined,
@@ -95,7 +93,7 @@ export const RecordForm: React.FC<RecordFormProps> = ({
       two_factor_codes: twoFactorCodes.trim() || undefined,
       private_key: privateKey.trim() || undefined,
       wallet_address: walletAddress.trim() || undefined,
-      website_url: websiteUrl.trim() || undefined,
+      website_url: initialData?.website_url,
       notes: notes.trim() || undefined,
     };
 
@@ -107,7 +105,6 @@ export const RecordForm: React.FC<RecordFormProps> = ({
         if (!initialData) {
           setWalletName('');
           setExchangeName('');
-          setUsernameOrEmail('');
           setWalletPassword('');
           setPin('');
           setSeedPhrase('');
@@ -115,7 +112,6 @@ export const RecordForm: React.FC<RecordFormProps> = ({
           setTwoFactorCodes('');
           setPrivateKey('');
           setWalletAddress('');
-          setWebsiteUrl('');
           setNotes('');
         }
         setTimeout(() => {
@@ -254,30 +250,6 @@ export const RecordForm: React.FC<RecordFormProps> = ({
                 </option>
               ))}
             </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Username / Email</label>
-            <input
-              type="text"
-              placeholder="operator@crypto.org"
-              value={usernameOrEmail}
-              onChange={(e) => setUsernameOrEmail(e.target.value)}
-              className="vault-input w-full px-3 py-2.5 rounded-xl text-xs text-white placeholder-zinc-600 focus:outline-none font-mono"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Website / URL</label>
-            <input
-              type="text"
-              placeholder="https://app.uniswap.org"
-              value={websiteUrl}
-              onChange={(e) => setWebsiteUrl(e.target.value)}
-              className="vault-input w-full px-3 py-2.5 rounded-xl text-xs text-white placeholder-zinc-600 focus:outline-none"
-            />
           </div>
         </div>
 

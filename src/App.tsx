@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './hooks/useAuth';
 import { RecordsProvider } from './hooks/useRecords';
 import { AppLayout } from './components/layout/AppLayout';
 import { WelcomeView } from './views/WelcomeView';
+import { LandingPageView } from './views/LandingPageView';
 import { SignUpView } from './views/SignUpView';
 import { SignInView } from './views/SignInView';
 import { ForgotPasswordView } from './views/ForgotPasswordView';
@@ -47,6 +48,8 @@ const ScreenRouter: React.FC = () => {
   // Unauthenticated routing
   if (!user) {
     switch (activeScreen) {
+      case 'landing':
+        return <LandingPageView />;
       case 'signup':
         return <SignUpView />;
       case 'signin':
@@ -54,9 +57,17 @@ const ScreenRouter: React.FC = () => {
       case 'forgot_password':
         return <ForgotPasswordView />;
       case 'welcome':
-      default:
         return <WelcomeView />;
+      case 'about':
+        return <AboutView />;
+      default:
+        return <LandingPageView />;
     }
+  }
+
+  // Allow authenticated users to view landing page if requested
+  if (activeScreen === 'landing') {
+    return <LandingPageView />;
   }
 
   // Authenticated routing: If vault is locked, require biometric enrollment or biometric unlock

@@ -35,6 +35,7 @@ export interface AdminUserSummary {
 }
 
 export type ActiveScreen =
+  | 'landing'
   | 'welcome'
   | 'signup'
   | 'signin'
