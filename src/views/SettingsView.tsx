@@ -13,10 +13,8 @@ import {
   Download,
   Check,
   ShieldAlert,
-  KeyRound,
 } from 'lucide-react';
 import { getActiveSupabaseConfig, updateSupabaseConfig } from '../lib/supabase';
-import { getAdminUserId, setAdminUserId } from '../lib/config';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 
 export const SettingsView: React.FC = () => {
@@ -31,11 +29,6 @@ export const SettingsView: React.FC = () => {
   const [dbSuccess, setDbSuccess] = useState(false);
   const [dbError, setDbError] = useState<string | null>(null);
 
-  // Admin ID configuration dialog
-  const [showAdminModal, setShowAdminModal] = useState(false);
-  const [adminIdInput, setAdminIdInput] = useState(getAdminUserId());
-  const [adminConfigSaved, setAdminConfigSaved] = useState(false);
-
   const handleSaveDb = (e: React.FormEvent) => {
     e.preventDefault();
     const res = updateSupabaseConfig(supabaseUrl, supabaseKey);
@@ -49,32 +42,6 @@ export const SettingsView: React.FC = () => {
       }, 1000);
     } else {
       setDbError(res.error || 'Invalid configuration');
-    }
-  };
-
-  const handleSaveAdminId = (e: React.FormEvent) => {
-    e.preventDefault();
-    setAdminUserId(adminIdInput.trim());
-    setAdminConfigSaved(true);
-    showToast('Admin User ID configuration updated');
-    setTimeout(() => {
-      setShowAdminModal(false);
-      setAdminConfigSaved(false);
-      window.location.reload();
-    }, 800);
-  };
-
-  const handleSetCurrentAsAdmin = () => {
-    if (user?.id) {
-      setAdminIdInput(user.id);
-      setAdminUserId(user.id);
-      setAdminConfigSaved(true);
-      showToast('Current account configured as Administrator');
-      setTimeout(() => {
-        setShowAdminModal(false);
-        setAdminConfigSaved(false);
-        window.location.reload();
-      }, 800);
     }
   };
 
@@ -193,36 +160,6 @@ export const SettingsView: React.FC = () => {
           <ChevronRight className="w-4 h-4 text-zinc-600" />
         </button>
 
-        {/* Administrator Verification & Setup */}
-        <button
-          onClick={() => setShowAdminModal(true)}
-          className="w-full p-4 flex items-center justify-between hover:bg-zinc-900/60 transition text-left cursor-pointer"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300">
-              <KeyRound className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-xs font-semibold text-white block">Administrator Verification</span>
-              <span className="text-[11px] text-zinc-400 block font-mono">
-                {isAdmin ? 'Administrator access verified' : 'Verify or configure Admin User ID'}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {isAdmin ? (
-              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2 py-0.5 rounded">
-                Verified
-              </span>
-            ) : (
-              <span className="text-[10px] font-mono text-zinc-500">
-                Configure
-              </span>
-            )}
-            <ChevronRight className="w-4 h-4 text-zinc-600" />
-          </div>
-        </button>
-
         {/* Session Info */}
         <div className="p-4 flex items-center justify-between text-left">
           <div className="flex items-center gap-3">
@@ -306,105 +243,6 @@ export const SettingsView: React.FC = () => {
           <span>Sign Out of CryptoLocker</span>
         </button>
       </div>
-
-      {/* Admin Authorization Modal */}
-      {showAdminModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl vault-panel p-6 shadow-2xl text-zinc-100 border border-zinc-800">
-            <h3 className="text-sm font-semibold tracking-tight text-white mb-1">
-              Administrator ID Verification
-            </h3>
-            <p className="text-xs text-zinc-400 leading-relaxed mb-4">
-              Administrator access is granted strictly by matching the authenticated Supabase user UUID against the configured Admin User ID.
-            </p>
-
-            {isAdmin ? (
-              <div className="mb-4 p-3 rounded-xl bg-emerald-950/40 border border-emerald-800 text-xs text-emerald-200 space-y-1">
-                <div className="flex items-center gap-2 font-semibold text-emerald-300">
-                  <Check className="w-4 h-4" />
-                  <span>Administrator access verified</span>
-                </div>
-                <p className="text-[11px] text-emerald-300/80">
-                  Your authenticated UUID matches the configured Administrator UUID. The Admin Dashboard is fully accessible.
-                </p>
-              </div>
-            ) : (
-              <div className="mb-4 p-3 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-300 space-y-1">
-                <span className="font-semibold text-white block">Current User UUID:</span>
-                <span className="font-mono text-[11px] text-zinc-400 block break-all">
-                  {user?.id || 'Not signed in'}
-                </span>
-                <p className="text-[11px] text-zinc-400 pt-1">
-                  Does not match the currently configured Admin ID ({getAdminUserId() || 'none'}).
-                </p>
-              </div>
-            )}
-
-            {adminConfigSaved && (
-              <div className="mb-4 p-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-200 flex items-center gap-1.5">
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span>Admin User ID updated. Reloading state...</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSaveAdminId} className="space-y-3.5">
-              <div>
-                <label className="block text-[11px] font-medium text-zinc-300 mb-1">
-                  Configured Admin User ID (UUID)
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="00000000-0000-0000-0000-000000000000"
-                  value={adminIdInput}
-                  onChange={(e) => setAdminIdInput(e.target.value)}
-                  className="vault-input w-full px-3 py-2 rounded-xl text-xs text-white placeholder-zinc-600 focus:outline-none font-mono"
-                />
-              </div>
-
-              {user?.id && !isAdmin && (
-                <button
-                  type="button"
-                  onClick={handleSetCurrentAsAdmin}
-                  className="w-full py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-700 text-xs font-medium transition cursor-pointer"
-                >
-                  Set Current Signed-In Account As Administrator
-                </button>
-              )}
-
-              {isAdmin && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAdminModal(false);
-                    navigateTo('admin_dashboard');
-                  }}
-                  className="w-full py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <ShieldAlert className="w-4 h-4" />
-                  <span>Open Admin Dashboard Now</span>
-                </button>
-              )}
-
-              <div className="flex items-center justify-end gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAdminModal(false)}
-                  className="px-3.5 py-2 text-xs text-zinc-400 hover:text-white rounded-xl bg-zinc-900 border border-zinc-800 cursor-pointer"
-                >
-                  Close
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-zinc-950 bg-white hover:bg-zinc-200 rounded-xl shadow transition cursor-pointer"
-                >
-                  Save ID
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Supabase Connection Modal */}
       {showDbModal && (

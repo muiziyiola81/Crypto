@@ -30,7 +30,7 @@ import { AdminRecordsView } from './views/admin/AdminRecordsView';
 import { Lock } from 'lucide-react';
 
 const ScreenRouter: React.FC = () => {
-  const { user, activeScreen, loading, isVaultUnlocked } = useAuth();
+  const { user, activeScreen, loading, isVaultUnlocked, isAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -102,16 +102,16 @@ const ScreenRouter: React.FC = () => {
       return <SecurityView />;
     case 'about':
       return <AboutView />;
-    // Admin System Screens
+    // Admin System Screens (strictly guarded by isAdmin)
     case 'admin_dashboard':
     case 'admin_activity':
     case 'admin_system':
-      return <AdminDashboardView />;
+      return isAdmin ? <AdminDashboardView /> : <DashboardView />;
     case 'admin_users':
-      return <AdminUsersView />;
+      return isAdmin ? <AdminUsersView /> : <DashboardView />;
     case 'admin_records':
     case 'admin_record_detail':
-      return <AdminRecordsView />;
+      return isAdmin ? <AdminRecordsView /> : <DashboardView />;
     case 'dashboard':
     default:
       return <DashboardView />;
