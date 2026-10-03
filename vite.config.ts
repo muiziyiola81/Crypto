@@ -4,9 +4,12 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
+  const isBuild = command === 'build';
+  const basePath = isBuild ? '/Crypto/' : '/';
+
   return {
-    base: '/Crypto/',
+    base: basePath,
 
     plugins: [
       react(),
@@ -22,7 +25,7 @@ export default defineConfig(() => {
         ],
 
         manifest: {
-          id: '/Crypto/',
+          id: basePath,
           name: 'CryptoLocker - Crypto Credential Vault',
           short_name: 'CryptoLocker',
           description:
@@ -32,24 +35,24 @@ export default defineConfig(() => {
           background_color: '#09090b',
           display: 'standalone',
 
-          start_url: '/Crypto/',
-          scope: '/Crypto/',
+          start_url: basePath,
+          scope: basePath,
 
           icons: [
             {
-              src: '/Crypto/pwa-192x192.png',
+              src: `${basePath}pwa-192x192.png`,
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/Crypto/pwa-512x512.png',
+              src: `${basePath}pwa-512x512.png`,
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/Crypto/pwa-maskable-512x512.png',
+              src: `${basePath}pwa-maskable-512x512.png`,
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable',
@@ -64,7 +67,7 @@ export default defineConfig(() => {
         },
 
         devOptions: {
-          enabled: true,
+          enabled: process.env.DISABLE_HMR !== 'true',
           type: 'module',
         },
       }),

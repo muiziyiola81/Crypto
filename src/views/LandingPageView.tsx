@@ -17,25 +17,11 @@ import {
   X,
 } from 'lucide-react';
 
-// ============================================================
-// CRYPTOLOCKER APK DOWNLOAD URL
-// ============================================================
-// Replace this with your real GitHub APK download URL later.
-//
-// Example:
-// const APK_DOWNLOAD_URL =
-//   'https://github.com/YOUR-USERNAME/Crypto/releases/download/v1.0.0/CryptoLocker.apk';
-//
-// Do NOT put a fake URL here.
-// ============================================================
-const APK_DOWNLOAD_URL = 'YOUR_APK_DOWNLOAD_URL_HERE';
-
 export const LandingPageView: React.FC = () => {
   const { user, isVaultUnlocked, navigateTo } = useAuth();
   const { isInstallable, install } = usePWAInstall();
 
   // Modals
-  const [showApkModal, setShowApkModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -74,24 +60,6 @@ export const LandingPageView: React.FC = () => {
         });
       }
     }
-  };
-
-  // ============================================================
-  // APK DOWNLOAD
-  // ============================================================
-  const handleDownloadAPK = () => {
-    if (
-      !APK_DOWNLOAD_URL ||
-      APK_DOWNLOAD_URL === 'YOUR_APK_DOWNLOAD_URL_HERE'
-    ) {
-      alert(
-        'The CryptoLocker APK download is not available yet. The APK download link will be added soon.'
-      );
-      return;
-    }
-
-    // Open the APK download URL.
-    window.location.href = APK_DOWNLOAD_URL;
   };
 
   return (
@@ -206,7 +174,7 @@ export const LandingPageView: React.FC = () => {
             </button>
 
             <button
-              onClick={handleDownloadAPK}
+              onClick={handlePWAInstall}
               className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer"
             >
 
@@ -283,7 +251,7 @@ export const LandingPageView: React.FC = () => {
               <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3.5 max-w-md mx-auto lg:mx-0">
 
                 <button
-                  onClick={handleDownloadAPK}
+                  onClick={handlePWAInstall}
                   className="h-13 px-7 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-sm shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2.5 transition active:scale-[0.98] cursor-pointer group"
                 >
 
@@ -877,24 +845,24 @@ export const LandingPageView: React.FC = () => {
               </p>
 
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                Download the Android app or use CryptoLocker directly from your browser.
+                Install the web app or use CryptoLocker directly from your browser.
               </p>
 
             </div>
 
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
 
-              {/* REAL APK DOWNLOAD */}
+              {/* PWA INSTALL */}
 
               <button
-                onClick={handleDownloadAPK}
+                onClick={handlePWAInstall}
                 className="w-full sm:w-auto h-13 px-8 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2.5 transition active:scale-[0.98] cursor-pointer"
               >
 
                 <Download className="w-4 h-4" />
 
                 <span>
-                  Download APK
+                  Install CryptoLocker
                 </span>
 
               </button>
@@ -917,7 +885,7 @@ export const LandingPageView: React.FC = () => {
             </div>
 
             <p className="text-[11px] text-zinc-500 font-mono pt-2">
-              Android APK · Web App
+              Progressive Web App · Web App
             </p>
 
           </div>
